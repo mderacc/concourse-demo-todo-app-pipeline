@@ -2,9 +2,9 @@
 platform: linux
 
 image_resource:
-	type: docker-image
+  type: docker-image
 source:
-	repository: node
+  repository: node
 inputs:
 - name: todo-front-resource
 outputs: 

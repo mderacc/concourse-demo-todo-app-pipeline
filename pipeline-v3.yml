@@ -17,6 +17,11 @@ resources:
   source:
     branch: master
     uri: https://github.com/mderacc/concourse-demo-todo-app-back
+- name: todo-app-pipeline
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/mderacc/concourse-demo-todo-app-pipeline
 jobs:
 - name: main-job
   plan:
@@ -25,11 +30,12 @@ jobs:
         trigger: true
       - get: todo-front-resource
         trigger: true
+      - get: todo-app-pipeline
     - aggregate :
       - task: build-task-front
-        file: tasks/task-build-front.yml
+        file: todo-app-pipeline/tasks/task-build-front.yml
       - task: build-task-back
-        file: tasks/task-build-back.yml
+        file: todo-app-pipeline/tasks/task-build-back.yml
         params:
           PACKAGE_NAME: back-1.0-SNAPSHOT-fat.jar
     - put: nexus-docker-repo-front
