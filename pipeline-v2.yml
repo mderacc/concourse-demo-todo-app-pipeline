@@ -1,0 +1,77 @@
+resources:
+- name: todo-front-resource
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/mderacc/concourse-demo-todo-app-front
+- name: nexus-docker-repo-front
+  type: docker-image
+  source: 
+    repository: todo-front:8181/todo-front
+- name: nexus-docker-repo-back
+  type: docker-image
+  source: 
+    repository: todo-back:8282/todo-back
+- name: todo-back-resource
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/mderacc/concourse-demo-todo-app-back
+jobs:
+- name: main-job
+  plan:
+    - aggregate:
+      - get: todo-back-resource
+        trigger: true
+      - get: todo-front-resource
+        trigger: true
+    - aggregate :
+      - task: build-task-front
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: node
+          inputs:
+            - name: todo-front-resource
+          outputs: 
+            - name: todo-front-build-output
+          run:
+            path: sh
+            args:
+            - -exc
+            - |
+              cd todo-front-resource
+              npm install
+              npm run build
+              cp -r dist ../todo-front-build-output
+              cp Dockerfile ../todo-front-build-output
+              echo "Front : build task completed"
+      - task: build-task-back
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: maven
+          inputs:
+            - name: todo-back-resource
+          outputs: 
+            - name: todo-back-build-output
+          run:
+            path: sh
+            args:
+            - -exc
+            - |
+              cd todo-back-resource
+              mvn install
+              cp -r todoappback/target/back-1.0-SNAPSHOT-fat.jar ../todo-back-build-output
+              cp todoappback/Dockerfile ../todo-back-build-output
+    - put: nexus-docker-repo-front
+      params: 
+        build: todo-front-build-output
+    - put: nexus-docker-repo-back
+      params: 
+        build: todo-back-build-output
+      

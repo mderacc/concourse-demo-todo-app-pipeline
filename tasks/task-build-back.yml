@@ -1,0 +1,19 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: maven
+inputs:
+  - name: todo-back-resource
+outputs: 
+  - name: todo-back-build-output
+run:
+  path: sh
+  args:
+  - -exc
+  - |
+    cd todo-back-resource
+    mvn install
+    cp -r todoappback/target/$PACKAGE_NAME ../todo-back-build-output
+    cp todoappback/Dockerfile ../todo-back-build-output

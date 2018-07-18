@@ -1,0 +1,40 @@
+resources:
+- name: todo-front-resource
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/mderacc/concourse-demo-todo-app-front
+- name: nexus-docker-repo-front
+  type: docker-image
+  source: 
+    repository: todo-front:8181/todo-front
+- name: nexus-docker-repo-back
+  type: docker-image
+  source: 
+    repository: todo-back:8282/todo-back
+- name: todo-back-resource
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/mderacc/concourse-demo-todo-app-back
+jobs:
+- name: main-job
+  plan:
+    - aggregate:
+      - get: todo-back-resource
+        trigger: true
+      - get: todo-front-resource
+        trigger: true
+    - aggregate :
+      - task: build-task-front
+        file: tasks/task-build-front.yml
+      - task: build-task-back
+        file: tasks/task-build-back.yml
+        params:
+          PACKAGE_NAME: back-1.0-SNAPSHOT-fat.jar
+    - put: nexus-docker-repo-front
+      params: 
+        build: todo-front-build-output
+    - put: nexus-docker-repo-back
+      params: 
+        build: todo-back-build-output
